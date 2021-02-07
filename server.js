@@ -7,7 +7,10 @@ const MOVIES = require('./movies-small.json')
 
 const app = express()
 
-app.use(morgan('dev'))
+const morganSetting = process.env.NODE_ENV === 'production' 
+  ? 'tiny' 
+  : 'common'
+app.use(morgan(morganSetting))
 app.use(helmet())
 app.use(cors())
 
@@ -45,22 +48,19 @@ app.get('/movie', (req, res) => {
   res.json(response)
 })
 
+// 4 parameters in middleware, express knows to treat this as error handler
+app.use((error, req, res, next) => {
+  let response
+  if (process.env.NODE_ENV === 'production') {
+    response = { error: { message: 'server error' }}
+  } else {
+    response = { error }
+  }
+  res.status(500).json(response)
+})
 
-
-const PORT = 8000
+const PORT = process.env.PORT || 8000
 
 app.listen(PORT, () => {
   console.log(`Server listening at http://localhost:${PORT}`)
 })
-
-// Create a project called moviedex-api and initialize it as an Express app to meet the following requirements.
-
-// Users can search for Movies by genre, country or avg_vote
-// The endpoint is GET /movie
-// The search options for genre, country, and/or average vote are provided in query string parameters.
-// When searching by genre, users are searching for whether the Movie's genre includes a specified string. The search should be case insensitive.
-// When searching by country, users are searching for whether the Movie's country includes a specified string. The search should be case insensitive.
-// When searching by average vote, users are searching for Movies with an avg_vote that is greater than or equal to the supplied number.
-// The API responds with an array of full movie entries for the search results
-// The endpoint only responds when given a valid Authorization header with a Bearer API token value.
-// The endpoint should have general security in place such as best practice headers and support for CORS.
